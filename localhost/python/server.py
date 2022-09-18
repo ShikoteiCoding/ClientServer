@@ -37,21 +37,24 @@ if __name__ == "__main__":
 
     selector = selectors.DefaultSelector()
 
-    accept = partial(accept_func, selector = selector)
-    handler_connection = partial(handler_connection_func, selector = selector)
+    accept = partial(accept_func, selector=selector)
+    handler_connection = partial(handler_connection_func, selector=selector)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        print(f"[INFO]: Server is running... Ready to accept connections.")
 
         sock.bind((HOST, PORT)) # Bind host and port to socket
-        sock.listen(1) # Queue size of pending connection is 1
+        sock.listen() # Queue size of pending connection is 1
+
+        print(f"[INFO]: Server is listening... Ready to accept connections on {HOST, PORT}.")
+
+        sock.setblocking(False)
+        selector.register(sock, selectors.EVENT_READ, data=None)
 
         try:
             while True:
                 events = selector.select(timeout=None)
                 for key, mask in events:
                     if key.data is None:
-                        print("here")
                         accept(key.fileobj, None) # type: ignore
                     else:
                         handler_connection(key, mask)
