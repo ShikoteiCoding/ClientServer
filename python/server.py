@@ -10,8 +10,11 @@ if __name__ == "__main__":
     server.listen(1)
     conn, add = server.accept()
 
-    while True:
-        data = conn.recv(SOCKSIZE)
-        
-        if data:
-            print("New connection")
+    with conn:
+        print(f"{add} is connected.")
+        while True:
+            data = conn.recv(SOCKSIZE)
+            
+            if not data : break
+
+            conn.sendall(data)
