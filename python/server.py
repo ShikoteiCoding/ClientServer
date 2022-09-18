@@ -6,7 +6,7 @@ from utils import HOST, PORT, SOCKSIZE
 if __name__ == "__main__":
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind((HOST, PORT))
+        sock.bind((HOST, PORT)) # Bind host and port to socket
 
         sock.listen(1) # Queue size of pending connection is 1
         conn, addr = sock.accept()
