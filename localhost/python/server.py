@@ -22,14 +22,14 @@ def handler_connection_func(key, mask, *, selector: selectors.BaseSelector) -> N
         if recv_data:
             data.outb += recv_data
         else:
-            print(f"Closing connection to {data.addr}")
+            print(f"[INFO]: Closing connection to {data.addr}...")
             selector.unregister(sock)
             sock.close()
     
 
     if mask & selectors.EVENT_WRITE:
         if data.outb:
-            print(f"Echoing {data.outb!r} to {data.addr}")
+            print(f"[INFO]: Echoing {data.outb!r} to {data.addr}...")
             sent = sock.send(data.outb)  # Should be ready to write
             data.outb = data.outb[sent:]
 
