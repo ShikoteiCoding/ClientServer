@@ -2,6 +2,7 @@ import socket
 import types
 import selectors
 
+from functools import partial
 from utils import HOST, PORT, SOCKSIZE
 
 MESSAGES = [b"First Message from Client.", b"Second Message from Client."]
@@ -23,8 +24,48 @@ def generate_connections(selector, nb: int = 10) -> None:
         )
         selector.register(sock, events, data=data)
 
+def handler_connection_func(key, mask, selector: selectors.BaseSelector):
+     sock: socket.socket = key.fileobj #type: ignore
+     data = key.data
+
+     if mask & selectors.EVENT_READ:
+        recv_data = sock.recv(SOCKSIZE)
+        if recv_data:
+            print(f"[INFO]: Receiving data for client {data.connid} ...")
+            data.recv_total += len(recv_data)
+
+        if not recv_data or not data.recv_total == data.msg_total:
+            print(f"[INFO]: Closing connection for client {data.connid} ...")
+            selector.unregister(sock)
+            sock.close()
+
+     if mask & selectors.EVENT_WRITE:
+        if not data.outb and data.messages:
+            data.outb = data.messages.pop(0)
+        if data.outb:
+            print(f"Sending {data.outb!r} to connection {data.connid}")
+            sent = sock.send(data.outb)  # Should be ready to write
+            data.outb = data.outb[sent:]
+
+
+
 if __name__ == "__main__":
 
     selector = selectors.DefaultSelector()
 
     generate_connections(selector, 10)
+
+    handler_connection = partial(handler_connection_func, selector=selector)
+
+    try:
+        while True:
+            events = selector.select(timeout=None)
+            for key, mask in events:
+                if key.data is None:
+                    accept(key.fileobj, None) # type: ignore
+                else:
+                    handler_connection(key, mask)
+    except KeyboardInterrupt:
+        print("Caught keyboard interrupt, exiting")
+    finally:
+        selector.close()

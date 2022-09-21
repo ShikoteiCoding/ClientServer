@@ -25,7 +25,6 @@ def handler_connection_func(key, mask, *, selector: selectors.BaseSelector) -> N
             print(f"[INFO]: Closing connection to {data.addr}...")
             selector.unregister(sock)
             sock.close()
-    
 
     if mask & selectors.EVENT_WRITE:
         if data.outb:
