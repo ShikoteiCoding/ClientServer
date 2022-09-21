@@ -13,7 +13,7 @@ def accept_func(sock: socket.socket, _, *, selector: selectors.BaseSelector) -> 
     event = selectors.EVENT_READ | selectors.EVENT_WRITE
     selector.register(conn, event, data=data)
 
-def handler_connection_func(key, mask, *, selector: selectors.BaseSelector) -> None:
+def handle_event_func(key, mask, *, selector: selectors.BaseSelector) -> None:
     sock: socket.socket = key.fileobj 
     data = key.data
 
@@ -36,8 +36,8 @@ if __name__ == "__main__":
 
     selector = selectors.DefaultSelector()
 
-    accept = partial(accept_func, selector=selector)
-    handler_connection = partial(handler_connection_func, selector=selector)
+    accept_connection = partial(accept_func, selector=selector)
+    handle_event = partial(handle_event_func, selector=selector)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
 
@@ -54,9 +54,9 @@ if __name__ == "__main__":
                 events = selector.select(timeout=None)
                 for key, mask in events:
                     if key.data is None:
-                        accept(key.fileobj, None) # type: ignore
+                        accept_connection(key.fileobj, None) # type: ignore
                     else:
-                        handler_connection(key, mask)
+                        handle_event(key, mask)
         except KeyboardInterrupt:
             print("Caught keyboard interrupt, exiting")
         finally:

@@ -24,7 +24,7 @@ def generate_connections(selector, nb: int = 10) -> None:
         )
         selector.register(sock, events, data=data)
 
-def handler_connection_func(key, mask, selector: selectors.BaseSelector):
+def handle_event_func(key, mask, selector: selectors.BaseSelector):
      sock: socket.socket = key.fileobj #type: ignore
      data = key.data
 
@@ -32,6 +32,7 @@ def handler_connection_func(key, mask, selector: selectors.BaseSelector):
         recv_data = sock.recv(SOCKSIZE)
         if recv_data:
             print(f"[INFO]: Receiving data for client {data.connid} ...")
+            print(f"[INFO]: Data is: {recv_data}")
             data.recv_total += len(recv_data)
 
         if not recv_data or not data.recv_total == data.msg_total:
@@ -55,16 +56,14 @@ if __name__ == "__main__":
 
     generate_connections(selector, 10)
 
-    handler_connection = partial(handler_connection_func, selector=selector)
+    handle_event = partial(handle_event_func, selector=selector)
 
     try:
         while True:
             events = selector.select(timeout=None)
             for key, mask in events:
-                if key.data is None:
-                    accept(key.fileobj, None) # type: ignore
-                else:
-                    handler_connection(key, mask)
+                if key.data:
+                    handle_event(key, mask)
     except KeyboardInterrupt:
         print("Caught keyboard interrupt, exiting")
     finally:
